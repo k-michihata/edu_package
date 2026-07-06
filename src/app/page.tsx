@@ -16,13 +16,13 @@ export default function Home() {
         </p>
       </div>
       <Link
-        href="/simulation"
+        href="/home"
         className="rounded-full bg-blue-600 px-10 py-4 text-lg font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
       >
-        シミュレーションを始める
+        始める
       </Link>
       <p className="text-xs text-zinc-500 dark:text-zinc-500">
-        ログイン不要・結果はこのブラウザの中だけに保存されます
+        学校のGoogleアカウントでログインして利用します
       </p>
     </main>
   );

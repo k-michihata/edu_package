@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import EventCard from "@/components/EventCard";
-import { saveAnswers } from "@/lib/storage";
-import type { Answer, Evaluation, Phase } from "@/lib/types";
+import type { Evaluation, Phase } from "@/lib/types";
 
 interface EventItem {
   event_id: string;
   age_at_event: number;
   description: string;
+  answered: boolean;
 }
 
 const PHASE_LABEL: Record<Phase, string> = {
@@ -21,57 +21,85 @@ export default function SimulationPage() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("first");
   const [events, setEvents] = useState<EventItem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [actionText, setActionText] = useState("");
-  const answersRef = useRef<Answer[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const fetchEvents = useCallback(async (target: Phase) => {
-    setEvents(null);
-    setError(null);
-    try {
-      const res = await fetch("/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phase: target }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.events) {
-        throw new Error(data?.error ?? "事象の生成に失敗しました。もう一度お試しください。");
+  const loadPhase = useCallback(
+    async (target: Phase) => {
+      setPhase(target);
+      setEvents(null);
+      setError(null);
+      try {
+        const res = await fetch("/api/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase: target }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.events) {
+          throw new Error(data?.error ?? "事象の生成に失敗しました。もう一度お試しください。");
+        }
+        const items: EventItem[] = data.events;
+        const firstUnanswered = items.findIndex((e) => !e.answered);
+        if (firstUnanswered === -1) {
+          // このフェーズは回答済み。次のフェーズか結果へ
+          if (target === "first") {
+            await loadPhase("second");
+          } else {
+            router.replace("/result");
+          }
+          return;
+        }
+        setEvents(items);
+        setIndex(firstUnanswered);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "通信に失敗しました。もう一度お試しください。");
       }
-      setEvents(data.events);
-      setIndex(0);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "通信に失敗しました。もう一度お試しください。");
-    }
-  }, []);
+    },
+    [router],
+  );
 
   useEffect(() => {
-    fetchEvents("first");
-  }, [fetchEvents]);
+    loadPhase("first");
+  }, [loadPhase]);
 
-  const handleNext = () => {
-    if (!events || evaluation === null) return;
+  const handleNext = async () => {
+    if (!events || evaluation === null || saving) return;
     const current = events[index];
-    answersRef.current.push({
-      event_id: current.event_id,
-      age_at_event: current.age_at_event,
-      description: current.description,
-      evaluation,
-      action_text: actionText.trim(),
-    });
-    setEvaluation(null);
-    setActionText("");
-
-    if (index + 1 < events.length) {
-      setIndex(index + 1);
-    } else if (phase === "first") {
-      setPhase("second");
-      fetchEvents("second");
-    } else {
-      saveAnswers(answersRef.current);
-      router.push("/result");
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/answers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: current.event_id,
+          phase,
+          evaluation,
+          action_text: actionText,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "回答の保存に失敗しました。もう一度お試しください。");
+      }
+      setEvaluation(null);
+      setActionText("");
+      if (index + 1 < events.length) {
+        setIndex(index + 1);
+      } else if (phase === "first") {
+        await loadPhase("second");
+      } else {
+        router.push("/result");
+      }
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "保存に失敗しました。もう一度お試しください。");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -81,7 +109,7 @@ export default function SimulationPage() {
         <p className="max-w-md text-base leading-7 text-zinc-600 dark:text-zinc-400">{error}</p>
         <button
           type="button"
-          onClick={() => fetchEvents(phase)}
+          onClick={() => loadPhase(phase)}
           className="rounded-full bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
         >
           もう一度試す
@@ -129,12 +157,15 @@ export default function SimulationPage() {
       <button
         type="button"
         onClick={handleNext}
-        disabled={evaluation === null}
+        disabled={evaluation === null || saving}
         className="rounded-full bg-blue-600 px-8 py-4 text-lg font-semibold text-white transition-colors enabled:hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {isLast ? "人生グラフを見る" : "次へ"}
+        {saving ? "保存中…" : isLast ? "人生グラフを見る" : "次へ"}
       </button>
-      {evaluation === null && (
+      {saveError && (
+        <p className="text-center text-sm text-red-600 dark:text-red-400">{saveError}</p>
+      )}
+      {evaluation === null && !saveError && (
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
           ポジティブかネガティブかを選ぶと次に進めます
         </p>

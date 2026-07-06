@@ -8,7 +8,8 @@
 | ホスティング | Vercel | 無料枠で運用 |
 | AIモデル | GPT-5 mini（OpenAI API） | 低コスト・JSON出力対応。プロバイダは抽象化し、Claude Haiku等への切り替えも可能な設計とする |
 | グラフ描画 | Recharts | Next.jsとの親和性が高い |
-| データ保持 | sessionStorage（ブラウザ内） | MVPではサーバー側の永続保存なし |
+| DB・認証 | Supabase（PostgreSQL + Auth） | フル版で導入。Google OAuth（学校アカウント）・RLSによる生徒データ保護・無料枠運用 |
+| データ保持 | Supabase にユーザー単位で永続保存 | MVP時点は sessionStorage（`mvp` ブランチ参照） |
 
 ### 選定理由
 - **コスト最小**：Vercel無料枠＋低価格AIモデルで、1シミュレーションあたり1円未満の見込み

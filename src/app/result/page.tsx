@@ -1,46 +1,47 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import LifeGraph from "@/components/LifeGraph";
-import { clearAnswers, loadAnswers } from "@/lib/storage";
+import { createClient } from "@/lib/supabase/server";
 import type { Answer } from "@/lib/types";
 
-export default function ResultPage() {
-  const router = useRouter();
-  const [answers, setAnswers] = useState<Answer[] | null>(null);
-  const [loaded, setLoaded] = useState(false);
+export default async function ResultPage() {
+  const supabase = await createClient();
 
-  useEffect(() => {
-    setAnswers(loadAnswers());
-    setLoaded(true);
-  }, []);
+  const { data: rows } = await supabase
+    .from("simulation_answers")
+    .select("event_id, evaluation, action_text, ai_events(age_at_event, description)")
+    .order("created_at");
 
-  const handleRestart = () => {
-    clearAnswers();
-    router.push("/");
-  };
+  const answers: Answer[] = (rows ?? [])
+    .flatMap((r) => {
+      const event = Array.isArray(r.ai_events) ? r.ai_events[0] : r.ai_events;
+      if (!event) return [];
+      return [
+        {
+          event_id: r.event_id,
+          age_at_event: event.age_at_event,
+          description: event.description,
+          evaluation: r.evaluation,
+          action_text: r.action_text,
+        },
+      ];
+    })
+    .sort((a, b) => a.age_at_event - b.age_at_event);
 
-  if (!loaded) return null;
-
-  if (!answers) {
+  if (answers.length === 0) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <p className="text-base text-zinc-600 dark:text-zinc-400">
           シミュレーションの結果がまだありません。
         </p>
         <Link
-          href="/"
+          href="/home"
           className="rounded-full bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
         >
-          トップへ戻る
+          ホームへ戻る
         </Link>
       </main>
     );
   }
-
-  const sorted = [...answers].sort((a, b) => a.age_at_event - b.age_at_event);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10">
@@ -51,12 +52,12 @@ export default function ResultPage() {
         </p>
       </div>
 
-      <LifeGraph answers={sorted} />
+      <LifeGraph answers={answers} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">出来事のふりかえり</h2>
         <ul className="flex flex-col gap-3">
-          {sorted.map((a) => (
+          {answers.map((a) => (
             <li
               key={a.event_id}
               className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
@@ -84,13 +85,12 @@ export default function ResultPage() {
         </ul>
       </section>
 
-      <button
-        type="button"
-        onClick={handleRestart}
+      <Link
+        href="/home"
         className="mx-auto rounded-full border border-zinc-300 px-8 py-3 font-semibold transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
       >
-        もう一度やってみる
-      </button>
+        ホームへ戻る
+      </Link>
     </main>
   );
 }

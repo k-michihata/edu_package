@@ -8,7 +8,14 @@
 
 - AIが生成した将来の事象（10〜80代）に対してポジ/ネガ評価と行動記述を行う
 - シミュレーション結果を人生グラフとして可視化する
-- ログイン不要・ブラウザ上で完結するMVP構成
+- 学校のGoogleアカウントでログインし、進捗を保存・再開できる
+
+## ブランチ
+
+| ブランチ | 内容 |
+|---------|------|
+| `main` | フル版の開発 |
+| `mvp`（タグ `mvp-v1`） | MVP完成時点のスナップショット（ログイン不要・sessionStorage版） |
 
 ## 技術スタック
 
@@ -17,10 +24,23 @@
 | フレームワーク | Next.js (App Router) / TypeScript |
 | スタイリング | Tailwind CSS |
 | グラフ | Recharts |
-| AI | Anthropic Claude API |
-| データ保持 | sessionStorage |
+| AI | OpenAI API（`gpt-5-mini`） |
+| DB・認証 | Supabase（PostgreSQL + Auth、Google OAuth） |
+| ホスティング | Vercel |
 
 ## 開発環境のセットアップ
+
+### 1. Supabase プロジェクトの準備
+
+1. [Supabase](https://supabase.com/) でプロジェクトを作成する
+2. ダッシュボードの **SQL Editor** で `supabase/schema.sql` を実行する
+3. **Authentication > Providers** で Google を有効化する
+   （Google Cloud Console で OAuth クライアントを作成し、Client ID / Secret を設定。
+   リダイレクトURIには Supabase が表示するコールバックURLを登録する）
+4. **Authentication > URL Configuration** の Redirect URLs に
+   `http://localhost:3000/auth/callback`（本番はデプロイURL）を追加する
+
+### 2. アプリの起動
 
 ```bash
 # 依存パッケージのインストール
@@ -28,7 +48,10 @@ npm install
 
 # 環境変数の設定
 cp .env.local.example .env.local
-# .env.local に ANTHROPIC_API_KEY を設定する
+# .env.local に以下を設定する
+#   OPENAI_API_KEY               … OpenAI のAPIキー
+#   NEXT_PUBLIC_SUPABASE_URL     … Supabase の Project URL
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY … Supabase の anon key
 
 # 開発サーバーの起動
 npm run dev
@@ -38,5 +61,6 @@ npm run dev
 
 ## ドキュメント
 
-- [full/](full/) — フル要件定義
+- [full/](full/) — フル要件定義（開発中の仕様）
 - [mvp/](mvp/) — MVP仕様書
+- [supabase/schema.sql](supabase/schema.sql) — DBスキーマ（RLS含む）

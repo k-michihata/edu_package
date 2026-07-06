@@ -24,8 +24,6 @@ MVPで実装済みの中核フロー（AI事象生成 → ポジ/ネガ評価 �
 - ログイン・認証とデータの永続保存
 - 教師向けアドミン機能（進捗管理・人生グラフ一覧・問いかけカスタマイズ）
 
-DB・認証の技術は未選定。決定したら `full/07_tech.md` と本ファイルの技術スタック表を更新すること。
-
 ## 技術スタック
 
 | 項目 | 技術 |
@@ -34,8 +32,17 @@ DB・認証の技術は未選定。決定したら `full/07_tech.md` と本フ�
 | ホスティング | Vercel |
 | AIモデル | OpenAI API `gpt-5-mini` |
 | グラフ描画 | Recharts |
-| データ保持 | sessionStorage（ブラウザ内のみ） |
+| DB・認証 | Supabase（PostgreSQL + Auth、Google OAuth） |
+| データ保持 | Supabase にユーザー単位で永続保存 |
 | スタイリング | Tailwind CSS |
+
+## Supabase の方針
+
+- スキーマは `supabase/schema.sql` で管理（変更時はこのファイルを更新する）
+- クライアントは `src/lib/supabase/`（`client.ts`＝ブラウザ、`server.ts`＝サーバー）を使う
+- **RLSを必ず有効にする**。生徒のデータは本人のみ読み書き可能（教師の閲覧ポリシーはアドミン実装時に追加）
+- APIルート・サーバーコンポーネントは anon キー + ユーザーセッションでアクセスし、RLSに保護を委ねる。service role キーは原則使わない
+- 認証保護は `src/middleware.ts`（画面はリダイレクト、APIは各ハンドラで401）
 
 ## アーキテクチャ方針
 
