@@ -43,6 +43,11 @@ export default function SimulationPage() {
         if (!res.ok || !data?.events) {
           throw new Error(data?.error ?? "事象の生成に失敗しました。もう一度お試しください。");
         }
+        if (data.needsInput) {
+          // このフェーズの生徒入力がまだ → 事象入力画面へ
+          router.replace(`/simulation/input?phase=${target}`);
+          return;
+        }
         const items: EventItem[] = data.events;
         const firstUnanswered = items.findIndex((e) => !e.answered);
         if (firstUnanswered === -1) {
