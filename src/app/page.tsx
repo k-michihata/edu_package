@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StartButton from "@/components/StartButton";
 
 export default function Home() {
   return (
@@ -15,14 +15,9 @@ export default function Home() {
           最後に、あなたの答えが1本の人生グラフになります。
         </p>
       </div>
-      <Link
-        href="/home"
-        className="rounded-full bg-blue-600 px-10 py-4 text-lg font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-      >
-        始める
-      </Link>
+      <StartButton />
       <p className="text-xs text-zinc-500 dark:text-zinc-500">
-        学校のGoogleアカウントでログインして利用します
+        ログイン不要・進み具合は自動で保存されます（同じブラウザで再開できます）
       </p>
     </main>
   );

@@ -8,7 +8,8 @@
 
 - AIが生成した将来の事象（10〜80代）に対してポジ/ネガ評価と行動記述を行う
 - シミュレーション結果を人生グラフとして可視化する
-- 学校のGoogleアカウントでログインし、進捗を保存・再開できる
+- ログイン画面なしで利用できる（匿名セッションで進捗を自動保存・同じブラウザで再開可能）
+- 学校アカウント（Google）ログインは将来追加予定
 
 ## ブランチ
 
@@ -25,7 +26,7 @@
 | スタイリング | Tailwind CSS |
 | グラフ | Recharts |
 | AI | OpenAI API（`gpt-5-mini`） |
-| DB・認証 | Supabase（PostgreSQL + Auth、Google OAuth） |
+| DB・認証 | Supabase（PostgreSQL + Auth、匿名サインイン） |
 | ホスティング | Vercel |
 
 ## 開発環境のセットアップ
@@ -34,11 +35,7 @@
 
 1. [Supabase](https://supabase.com/) でプロジェクトを作成する
 2. ダッシュボードの **SQL Editor** で `supabase/schema.sql` を実行する
-3. **Authentication > Providers** で Google を有効化する
-   （Google Cloud Console で OAuth クライアントを作成し、Client ID / Secret を設定。
-   リダイレクトURIには Supabase が表示するコールバックURLを登録する）
-4. **Authentication > URL Configuration** の Redirect URLs に
-   `http://localhost:3000/auth/callback`（本番はデプロイURL）を追加する
+3. **Authentication > Sign In / Providers** で **Anonymous Sign-Ins を有効化**する
 
 ### 2. アプリの起動
 

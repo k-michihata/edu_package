@@ -35,14 +35,9 @@ export async function middleware(request: NextRequest) {
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (!user && isProtected) {
+    // セッションがなければトップへ（「始める」で匿名セッションが作られる）
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  if (user && (pathname === "/login" || pathname === "/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 

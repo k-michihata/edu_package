@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "@/components/LogoutButton";
 import type { Phase } from "@/lib/types";
 
 interface Step {
@@ -68,14 +67,11 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-8 px-4 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {profile?.name ? `${profile.name} さん` : "ようこそ"}
-          </p>
-          <h1 className="text-2xl font-bold sm:text-3xl">ホーム</h1>
-        </div>
-        <LogoutButton />
+      <div>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {profile?.name ? `${profile.name} さん` : "ようこそ"}
+        </p>
+        <h1 className="text-2xl font-bold sm:text-3xl">ホーム</h1>
       </div>
 
       <ol className="flex flex-col gap-3">

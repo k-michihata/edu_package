@@ -32,7 +32,7 @@ MVPで実装済みの中核フロー（AI事象生成 → ポジ/ネガ評価 �
 | ホスティング | Vercel |
 | AIモデル | OpenAI API `gpt-5-mini` |
 | グラフ描画 | Recharts |
-| DB・認証 | Supabase（PostgreSQL + Auth、Google OAuth） |
+| DB・認証 | Supabase（PostgreSQL + Auth。当面は匿名サインイン、Google OAuthは将来追加） |
 | データ保持 | Supabase にユーザー単位で永続保存 |
 | スタイリング | Tailwind CSS |
 
@@ -43,6 +43,7 @@ MVPで実装済みの中核フロー（AI事象生成 → ポジ/ネガ評価 �
 - **RLSを必ず有効にする**。生徒のデータは本人のみ読み書き可能（教師の閲覧ポリシーはアドミン実装時に追加）
 - APIルート・サーバーコンポーネントは anon キー + ユーザーセッションでアクセスし、RLSに保護を委ねる。service role キーは原則使わない
 - 認証保護は `src/middleware.ts`（画面はリダイレクト、APIは各ハンドラで401）
+- 認証は当面 **匿名サインイン**（トップの「始める」で自動作成。ログインUIなし）。学校アカウント（Google OAuth）はロール管理（F-01/F-03）実装時に追加する
 
 ## アーキテクチャ方針
 
