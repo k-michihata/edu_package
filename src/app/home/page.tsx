@@ -26,11 +26,14 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: events }, { data: answers }] = await Promise.all([
-    supabase.from("profiles").select("name, role").eq("id", user!.id).single(),
-    supabase.from("ai_events").select("id, phase"),
-    supabase.from("simulation_answers").select("event_id, phase"),
-  ]);
+  const [{ data: profile }, { data: events }, { data: answers }, { data: values }, { data: anchor }] =
+    await Promise.all([
+      supabase.from("profiles").select("name, role").eq("id", user!.id).single(),
+      supabase.from("ai_events").select("id, phase"),
+      supabase.from("simulation_answers").select("event_id, phase"),
+      supabase.from("value_descriptions").select("id"),
+      supabase.from("career_anchor_results").select("id").maybeSingle(),
+    ]);
 
   const phaseState = (phase: Phase) => {
     const eventCount = events?.filter((e) => e.phase === phase).length ?? 0;
@@ -45,25 +48,41 @@ export default async function HomePage() {
   const second = phaseState("second");
   const allDone = first.done && second.done;
 
+  const valuesStarted = (values?.length ?? 0) > 0;
+  const analysisDone = anchor !== null;
+
   const steps: Step[] = [
-    { label: "自己分析（価値観・行動タイプ診断）", status: "planned" },
+    {
+      label: "自己分析（価値観・行動タイプ診断）",
+      status: analysisDone ? "done" : valuesStarted ? "current" : "todo",
+    },
     {
       label: "シミュレーション前半（10〜40代）",
       status: first.done ? "done" : first.started ? "current" : "todo",
     },
     {
       label: "シミュレーション後半（50〜80代）",
-      status: second.done ? "done" : second.started ? "current" : first.done ? "todo" : "todo",
+      status: second.done ? "done" : second.started ? "current" : "todo",
     },
     { label: "人生グラフ", status: allDone ? "done" : "todo" },
   ];
 
-  const ctaHref = allDone ? "/result" : "/simulation";
+  const ctaHref = allDone
+    ? "/result"
+    : !analysisDone
+      ? valuesStarted
+        ? "/analysis/anchor"
+        : "/analysis/values"
+      : "/simulation";
   const ctaLabel = allDone
     ? "人生グラフを見る"
-    : first.started || second.started
-      ? "続きから再開する"
-      : "シミュレーションを始める";
+    : !analysisDone
+      ? valuesStarted
+        ? "続きから再開する（行動タイプ診断）"
+        : "自己分析から始める"
+      : first.started || second.started
+        ? "続きから再開する"
+        : "シミュレーションを始める";
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-8 px-4 py-10">

@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // APIルートは各ハンドラ内で認証チェックし401を返す（ここではリダイレクトしない）
-const PROTECTED_PATHS = ["/home", "/simulation", "/result"];
+const PROTECTED_PATHS = ["/home", "/simulation", "/result", "/analysis"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
